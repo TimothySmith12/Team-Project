@@ -1,0 +1,189 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+//Defining the book class
+class Book {
+public:
+    string title;
+    string author;
+    bool isAvailable;
+
+    Book(string t, string a) : title(t), author(a), isAvailable(true) {}
+//"borrowBook" functionality marks the book borrowed if the book is available
+    void borrowBook() {
+        if (isAvailable) {
+            isAvailable = false;
+            cout << "Book borrowed successfully!" << endl;
+        } else {
+            cout << "Book is already borrowed." << endl;
+        }
+    }
+//"returnBook" functionality marks the book available if it is not available and being returned
+    void returnBook() {
+        if (!isAvailable) {
+            isAvailable = true;
+            cout << "Book returned successfully!" << endl;
+        } else {
+            cout << "Book is already available in the library." << endl;
+        }
+    }
+};
+
+//Defining the Library class
+class Library {
+public:
+//vector to store the books
+    vector<Book> books;
+//"add new book" functionality takes the title and author as parameters
+    void addBook(const string& title, const string& author) {
+        books.emplace_back(title, author);
+        cout << "Book added successfully!" << endl;
+    }
+//"display all books" functionality displays a list of all the books
+//also returns if the book is available, borrowed, or not found
+
+    void displayAllBooks() {
+        if (books.empty()) {
+            cout << "Library is empty." << endl;
+            return;
+        }
+        cout << "List of all books:" << endl;
+        for (int i = 0; i < books.size(); ++i) {
+            cout << i + 1 << ". Title: " << books[i].title << ", Author: " << books[i].author << ", Availability: ";
+            if (books[i].isAvailable) {
+                cout << "Available";
+            } else {
+                cout << "Borrowed";
+            }
+            cout << endl;
+        }
+    }
+
+//"searchByTitle" functionalaity searches for a book by it's title and outputs matching results
+//also returns if the book is available, borrowed, or not found
+
+    void searchByTitle(const string& title) {
+        for (const Book& book : books) {
+            if (book.title == title) {
+                cout << "Book found: Title: " << book.title << ", Author: " << book.author << ", Availability: ";
+                if (book.isAvailable) {
+                    cout << "Available";
+                } else {
+                    cout << "Borrowed";
+                }
+                cout << endl;
+                return;
+            }
+        }
+        cout << "Book not found." << endl;
+    }
+//"searchByAuthor" functionality searches for a book by it's author and outputs matching results
+//The 
+    void searchByAuthor(const string& author) {
+        cout << "Books by author '" << author << "':" << endl;
+        bool found = false;
+        for (const Book& book : books) {
+            if (book.author == author) {
+                found = true;
+                cout << "Title: " << book.title << ", Availability: ";
+                if (book.isAvailable) {
+                    cout << "Available";
+                } else {
+                    cout << "Borrowed";
+                }
+                cout << endl;
+            }
+        }
+        if (!found) {
+            cout << "No books by author '" << author << "' found." << endl;
+        }
+    }
+};
+
+int main() {
+    Library library;
+    int choice;
+
+//main menu and main loop
+
+    while (true) {
+        cout << "Library Management System" << endl;
+        cout << "1. Add a new book" << endl;
+        cout << "2. Display all books" << endl;
+        cout << "3. Search for a book by title" << endl;
+        cout << "4. Search for a book by author" << endl;
+        cout << "5. Borrow a book" << endl;
+        cout << "6. Return a borrowed book" << endl;
+        cout << "7. Exit" << endl;
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1: {
+                string title, author;
+                cout << "Enter book title: ";
+                cin.ignore();
+                getline(cin, title);
+                cout << "Enter book author: ";
+                getline(cin, author);
+                library.addBook(title, author);
+                break;
+            }
+            case 2:
+                library.displayAllBooks();
+                break;
+            case 3: {
+                string title;
+                cout << "Enter book title to search: ";
+                cin.ignore();
+                getline(cin, title);
+                library.searchByTitle(title);
+                break;
+            }
+            case 4: {
+                string author;
+                cout << "Enter author name to search: ";
+                cin.ignore();
+                getline(cin, author);
+                library.searchByAuthor(author);
+                break;
+            }
+            case 5: {
+                string title;
+                cout << "Enter book title to borrow: ";
+                cin.ignore();
+                getline(cin, title);
+                for (Book& book : library.books) {
+                    if (book.title == title) {
+                        book.borrowBook();
+                        break;
+                    }
+                }
+                break;
+            }
+            case 6: {
+                string title;
+                cout << "Enter book title to return: ";
+                cin.ignore();
+                getline(cin, title);
+                for (Book& book : library.books) {
+                    if (book.title == title) {
+                        book.returnBook();
+                        break;
+                    }
+                }
+                break;
+            }
+            case 7:
+                cout << "Exiting the program." << endl;
+                return 0;
+            default:
+                cout << "Invalid choice. Please enter a valid option." << endl;
+        }
+    }
+
+    return 0;
+}
