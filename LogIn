@@ -10,7 +10,7 @@
 const std::string userFilePath = "users.txt";
 
 //user credentials map storing user credentials
-std::unordered_map<std::string, std::string> userCredentials;
+std::unordered_map<std::string, std::pair<std::string, bool>> userCredentials;
 
 //function declarations
 void loadUserCredentials();
@@ -22,10 +22,10 @@ void login();
 void registerUser();
 void userSession(const std::string &username);
 void logout();
-bool validateCredentials(const std::string &username,
-                         const std::string &password);
-void saveUser(const std::string &username, const std::string &password);
+bool validateCredentials(const std::string &username, const std::string &password);
+void saveUser(const std::string &username, const std::string &password, bool isAdmin);
 bool usernameExists(const std::string &username);
+
 
 //menu function
 int main() {
@@ -35,37 +35,34 @@ int main() {
     int choice = getUserChoice();
     processPreLoginChoice(choice);
   }
-  saveUserCredentials(); //save credentials at the end
+  saveUserCredentials(); //save credentials
   return 0;
 }
 
 //load user credentials from file into the unordered_map
 void loadUserCredentials() {
-  std::ifstream file(userFilePath);
-  std::string username, password;
-  while (file >> username >> password) {
-    userCredentials[username] = password;
-  }
-}
-void displayCredentials() {
-    std::cout << "Current users in the system:\n";
-    for (const auto& pair : userCredentials) {
-        std::cout << "Username: " << pair.first << ", Password: " << pair.second << std::endl;
+    std::ifstream file(userFilePath);
+    if (!file) {
+        std::cerr << "Failed to open " << userFilePath << " for reading.\n";
+        return;
+    }
+    std::string username, password;
+    bool isAdmin;
+    while (file >> username >> password >> isAdmin) {
+        userCredentials[username] = {password, isAdmin};
     }
 }
+
 
 //save user credentials from unordered_map back to file
 void saveUserCredentials() {
     std::ofstream file(userFilePath);
-    if (file.is_open()) {
-        for (const auto& pair : userCredentials) {
-            const std::string& username = pair.first;
-            const std::string& password = pair.second;
-            file << username << " " << password << std::endl;
-        }
-        file.close();
-    } else {
-        std::cout << "Failed to save user credentials.\n";
+    if (!file) {
+        std::cerr << "Failed to open " << userFilePath << " for writing.\n";
+        return;
+    }
+    for (const auto& pair : userCredentials) {
+        file << pair.first << " " << pair.second.first << " " << pair.second.second << std::endl;
     }
 }
 
@@ -84,9 +81,9 @@ void displayPreLoginMenu() {
 int getUserChoice() {
   int choice;
   while (!(std::cin >> choice)) {
-    std::cin.clear(); // Clear error flag
+    std::cin.clear(); //clear error flag
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(),
-                    '\n'); // Skip bad input
+                    '\n');
     std::cout << "Choice is invalid. Please enter a number 1-3: ";
   }
   return choice;
@@ -96,10 +93,11 @@ int getUserChoice() {
 void processPreLoginChoice(int choice) {
   switch (choice) {
   case 1:
-    displayCredentials();
+    login(); //login for existing users
     break;
   case 2:
     registerUser();
+    saveUserCredentials();  //save user credentials
     break;
   case 3:
     std::cout << "Thank you for using our VLMS. Have a great day!\n";
@@ -108,6 +106,25 @@ void processPreLoginChoice(int choice) {
     std::cout << "Choice is invalid. Enter a number 1-3.\n";
     break;
   }
+}
+void displayAllUsers() {
+    if (userCredentials.empty()) {
+        std::cout << "No users registered yet.\n";
+        return;
+    }
+
+    std::cout << "Current users in the system:\n";
+    std::cout << "-----------------------------------\n";
+    for (const auto& pair : userCredentials) {
+        const std::string& username = pair.first;
+        const std::string& password = pair.second.first;  // Accessing the password
+        bool isAdmin = pair.second.second;                // Accessing the admin status
+
+        std::cout << "Username: " << username 
+                  << ", Password: " << password 
+                  << ", Admin: " << (isAdmin ? "Yes" : "No") << std::endl;
+    }
+    std::cout << "-----------------------------------\n";
 }
 
 //user login handled
@@ -147,34 +164,48 @@ void logout() { std::cout << "Logging out. Have a great day!\n"; }
 
 // new user registration
 void registerUser() {
-  std::string username, password;
-  std::cout << "Create a username: ";
-  std::cin >> username;
-  if (usernameExists(username)) {
-    std::cout << "An account with this username already exists.\n";
-    return;
-  }
-  std::cout << "Create a password: ";
-  std::cin >> password;
-  saveUser(username, password);
-  std::cout << "Successful registration! Now Log in, " << username << ".\n";
+    std::string username, password;
+    char isAdminInput;
+    bool isAdmin = false;
+
+    std::cout << "Create a username: ";
+    std::cin >> username;
+
+    if (usernameExists(username)) {
+        std::cout << "An account with this username already exists.\n";
+        return;
+    }
+
+    std::cout << "Create a password: ";
+    std::cin >> password;
+
+    std::cout << "Is this user an admin? (Y/N): ";
+    std::cin >> isAdminInput;
+    isAdmin = (isAdminInput == 'Y' || isAdminInput == 'y');
+
+    saveUser(username, password, isAdmin);
+    std::cout << "Successful registration! Now log in, " << (isAdmin ? "Admin " : "")
+    <<username << ".\n";
 }
+
 
 //validate credentials
-bool validateCredentials(const std::string &username,
-                         const std::string &password) {
-  auto it = userCredentials.find(username);
-  if (it != userCredentials.end() && it->second == password) {
-    return true;
-  }
-  return false;
+bool validateCredentials(const std::string &username, const std::string &password) {
+    auto it = userCredentials.find(username);
+    if (it != userCredentials.end() && it->second.first == password) {
+        return true;
+    }
+    return false;
 }
 
+
 //save user's credentials to the unordered_map on successful registration
-void saveUser(const std::string &username, const std::string &password) {
-  userCredentials[username] = password;
-  std::cout << "User registered successfully.\n";
+void saveUser(const std::string &username, const std::string &password, bool isAdmin) {
+    userCredentials[username] = {password, isAdmin};
+    std::cout << "User registered successfully.\n";
 }
+
+
 
 //check if a username is in the unordered_map
 bool usernameExists(const std::string &username) {
