@@ -7,3 +7,7 @@ Login Choice: This choice asks for the users username and password. If valid, th
 Register Choice: This choise assk the user for a username. If it is unique, then it asks for a password and saves both to a users.txt file via a map. If it is not unique, then it produces and error and asks for the choices again. 
 
 Exit Choice: This exits the program
+
+
+
+User Session: This needs to be User Menu
