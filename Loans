@@ -1,0 +1,5 @@
+//Here is a file where users who have loans appear
+//A user should be able to take out a loan and write to this file
+//Admins can view this file to see everybody's current loans, users can just view their own loans
+//Users can return a book and pay off loans in seperate file but here is where they would override loans
+
