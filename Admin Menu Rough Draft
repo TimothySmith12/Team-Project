@@ -1,0 +1,393 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Define a Book structure to hold book information
+struct Book {
+    string title;
+    string author;
+};
+
+// Global vector to store the books in the library
+vector<Book> library;
+
+// Define a User structure to hold user information
+struct User {
+    string username;
+    bool isAdmin;
+};
+
+// Global vector to store the users
+vector<User> users;
+
+// Function to load books from file
+void loadBooks() {
+    ifstream inFile("books_data.txt");
+    if (!inFile.is_open()) {
+        cout << "Unable to open books file." << endl;
+        return;
+    }
+
+    library.clear(); // Clear existing books
+    string title;
+    string author;
+    while (getline(inFile, title) && getline(inFile, author)) {
+        library.push_back({title, author});
+    }
+
+    inFile.close();
+}
+
+// Function to save books to file
+void saveBooks() {
+    ofstream outFile("books_data.txt");
+    if (!outFile.is_open()) {
+        cout << "Unable to open books file for writing." << endl;
+        return;
+    }
+
+    for (const auto& book : library) {
+        outFile << book.title << endl;
+        outFile << book.author << endl;
+    }
+
+    outFile.close();
+}
+
+// Function to add a book
+void addBook() {
+    string title, author;
+
+    cout << "Enter the title of the book: ";
+    cin.ignore();
+    getline(cin, title);
+
+    cout << "Enter the author of the book: ";
+    getline(cin, author);
+
+    // Create a new Book object with the provided title and author
+    Book newBook = {title, author};
+
+    // Add the new book to the library
+    library.push_back(newBook);
+
+    cout << "Book added successfully." << endl;
+
+    // Save books to file
+    saveBooks();
+}
+
+// Function to remove a book
+void removeBook() {
+    string title, author;
+
+    cout << "Enter the title of the book you want to remove: ";
+    cin.ignore();
+    getline(cin, title);
+
+    cout << "Enter the author of the book you want to remove: ";
+    getline(cin, author);
+
+    // Search for the book in the library
+    auto it = find_if(library.begin(), library.end(), [&](const Book& book) {
+        return book.title == title && book.author == author;
+    });
+
+    if (it != library.end()) {
+        // Remove the book from the library
+        library.erase(it);
+        cout << "Book removed successfully." << endl;
+
+        // Save books to file
+        saveBooks();
+    } else {
+        cout << "Book not found in the library." << endl;
+    }
+}
+
+// Function to update book information
+void updateBook() {
+    string title, author;
+
+    cout << "Enter the title of the book you want to update: ";
+    cin.ignore();
+    getline(cin, title);
+
+    cout << "Enter the author of the book you want to update: ";
+    getline(cin, author);
+
+    // Search for the book in the library
+    auto it = find_if(library.begin(), library.end(), [&](const Book& book) {
+        return book.title == title && book.author == author;
+    });
+
+    if (it != library.end()) {
+        cout << "Enter the new title of the book (or press Enter to keep current title): ";
+        string newTitle;
+        getline(cin, newTitle);
+
+        cout << "Enter the new author of the book (or press Enter to keep current author): ";
+        string newAuthor;
+        getline(cin, newAuthor);
+
+        if (!newTitle.empty()) {
+            it->title = newTitle;
+        }
+        if (!newAuthor.empty()) {
+            it->author = newAuthor;
+        }
+        cout << "Book information updated successfully." << endl;
+
+        // Save books to file
+        saveBooks();
+    } else {
+        cout << "Book not found in the library." << endl;
+    }
+}
+
+// Function to view all loans
+void viewLoans() {
+    ifstream inFile("loans_data.txt");
+    if (!inFile.is_open()) {
+        cout << "Unable to open loans file." << endl;
+        return;
+    }
+
+    cout << "User\tLoan Amount" << endl;
+    string line;
+    while (getline(inFile, line)) {
+        if (line.empty() || line[0] == '/') {
+            continue; // Skip empty lines and lines starting with '/'
+        }
+
+        stringstream ss(line);
+        string user;
+        int loanAmount;
+        if (ss >> user >> loanAmount) {
+            cout << user << "\t$" << loanAmount << endl;
+        }
+    }
+
+    inFile.close();
+}
+
+// Function to load users from file
+void loadUsers() {
+    ifstream inFile("users_data.txt");
+    if (!inFile.is_open()) {
+        cout << "Unable to open users file." << endl;
+        return;
+    }
+
+    users.clear(); // Clear existing users
+    string username;
+    string role;
+    while (inFile >> username >> role) {
+        bool isAdmin = (role == "Admin");
+        users.push_back({username, isAdmin});
+    }
+
+    inFile.close();
+}
+
+// Function to save users to file
+void saveUsers() {
+    ofstream outFile("users_data.txt");
+    if (!outFile.is_open()) {
+        cout << "Unable to open users file for writing." << endl;
+        return;
+    }
+
+    for (const auto& user : users) {
+        string role = (user.isAdmin ? "Admin" : "User");
+        outFile << user.username << " " << role << endl;
+    }
+
+    outFile.close();
+}
+
+// Function to add a user
+void addUser() {
+    string username;
+    cout << "Enter the username of the new user: ";
+    cin.ignore();
+    getline(cin, username);
+
+    // Check if the user already exists
+    for (const auto& user : users) {
+        if (user.username == username) {
+            cout << "User already exists." << endl;
+            return;
+        }
+    }
+
+    // Add the new user
+    users.push_back({username, false}); // New users are not admins by default
+    cout << "User added successfully." << endl;
+
+    // Save users to file
+    saveUsers();
+}
+
+// Function to remove a user
+void removeUser() {
+    string username;
+    cout << "Enter the username of the user to remove: ";
+    cin.ignore();
+    getline(cin, username);
+
+    // Check if the user exists
+    auto it = find_if(users.begin(), users.end(), [&](const User& user) {
+        return user.username == username;
+    });
+
+    if (it != users.end()) {
+        // Remove the user
+        users.erase(it);
+        cout << "User removed successfully." << endl;
+
+        // Save users to file
+        saveUsers();
+    } else {
+        cout << "User not found." << endl;
+    }
+}
+
+// Function to make a user an admin
+void makeAdmin() {
+    string username;
+    cout << "Enter the username of the user to make admin: ";
+    cin.ignore();
+    getline(cin, username);
+
+    // Check if the user exists
+    auto it = find_if(users.begin(), users.end(), [&](const User& user) {
+        return user.username == username;
+    });
+
+    if (it != users.end()) {
+        // Make the user an admin
+        it->isAdmin = true;
+        cout << "User " << username << " is now an admin." << endl;
+
+        // Save users to file
+        saveUsers();
+    } else {
+        cout << "User not found." << endl;
+    }
+}
+
+// Function to remove admin rights from a user
+void removeAdmin() {
+    string username;
+    cout << "Enter the username of the admin to demote: ";
+    cin.ignore();
+    getline(cin, username);
+
+    // Check if the user exists
+    auto it = find_if(users.begin(), users.end(), [&](const User& user) {
+        return user.username == username && user.isAdmin;
+    });
+
+    if (it != users.end()) {
+        // Remove admin rights
+        it->isAdmin = false;
+        cout << "Admin rights removed from " << username << "." << endl;
+
+        // Save users to file
+        saveUsers();
+    } else {
+        cout << "Admin not found." << endl;
+    }
+}
+
+// Admin Dashboard
+void adminDashboard() {
+    loadBooks(); // Load books from file
+    loadUsers(); // Load users from file
+
+    int choice;
+    do {
+        cout << "\nAdmin Dashboard\n";
+        cout << "---------------\n";
+        cout << "1. Add a Book\n";
+        cout << "2. Remove a Book\n";
+        cout << "3. Update Book Information\n";
+        cout << "4. View All Loans\n";
+        cout << "5. Manage Users\n";
+        cout << "6. Logout\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                cout << "Adding a Book...\n";
+                addBook(); // Add book functionality
+                break;
+            case 2:
+                cout << "Removing a Book...\n";
+                removeBook(); // Remove book functionality
+                break;
+            case 3:
+                cout << "Updating Book Information...\n";
+                updateBook(); // Update book functionality
+                break;
+            case 4:
+                cout << "Viewing All Loans...\n";
+                viewLoans(); // View loans functionality
+                break;
+            case 5:
+                int userChoice;
+                cout << "\nUser Management\n";
+                cout << "---------------\n";
+                cout << "1. Add User\n";
+                cout << "2. Remove User\n";
+                cout << "3. Make Admin\n";
+                cout << "4. Remove Admin\n";
+                cout << "Enter your choice: ";
+                cin >> userChoice;
+                switch (userChoice) {
+                    case 1:
+                        addUser();
+                        break;
+                    case 2:
+                        removeUser();
+                        break;
+                    case 3:
+                        makeAdmin();
+                        break;
+                    case 4:
+                        removeAdmin();
+                        break;
+                    default:
+                        cout << "Invalid choice. Please enter a valid option.\n";
+                }
+                break;
+            case 6:
+                char logoutChoice;
+                cout << "Are you sure you want to log out? (Y/N): ";
+                cin >> logoutChoice;
+                if (logoutChoice == 'Y' || logoutChoice == 'y') {
+                    cout << "Logging out...\n";
+                    // You can add code here to properly logout the user
+                    return; // Stop the program
+                } else if (logoutChoice == 'N' || logoutChoice == 'n') {
+                    cout << "Returning to Admin Dashboard...\n";
+                } else {
+                    cout << "Invalid choice. Returning to Admin Dashboard...\n";
+                }
+                break;
+            default:
+                cout << "Invalid choice. Please enter a valid option.\n";
+        }
+    } while (choice != 6);
+}
+
+int main() {
+    adminDashboard();
+    return 0;
+}
