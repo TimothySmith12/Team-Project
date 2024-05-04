@@ -1,4 +1,0 @@
-
-
-//data storage for user that are added
-//will also store the key tag if they are Admin or not, will be important latter

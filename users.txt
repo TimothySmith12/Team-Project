@@ -1,0 +1,4 @@
+
+
+//data storage for users that are added
+//currently stores user, password, and boolean value of yes or no to figure out if they are Admin or not
