@@ -56,6 +56,20 @@ public:
             cout << "No books found." << endl;
         }
     }
+//"update book info" functionality takes the title and author as parameters
+    void updateBookInfo(const string& title, const string& author) {
+        for (auto& book : books) {
+            if (book.title == title) {
+                book.author = author;
+                cout << "Book information updated successfully!" << endl;
+                return;
+            }
+        }
+        cout << "Book not found." << endl;
+        if (books.empty()) {
+            cout << "No books found." << endl;
+        }
+    }
 //"display all books" functionality displays a list of all the books
 //also returns if the book is available, borrowed, or not found
 
